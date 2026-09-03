@@ -1,4 +1,4 @@
-name: data2201
+name: data2201fa26
 channels:
   - conda-forge
 dependencies:
