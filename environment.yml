@@ -40,5 +40,5 @@ dependencies:
   - datascience
   - pip:
     - dill==0.3.7
-    - otter-grader==6.1.6
+    - otter-grader==7.0.0
     - scikit-learn-extra
