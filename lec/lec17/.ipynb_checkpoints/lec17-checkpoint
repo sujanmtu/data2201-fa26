@@ -1,0 +1,315 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "c8d97be6",
+   "metadata": {},
+   "source": [
+    "# Linear Algebra & Calculus for ML — Hands‑On Demo\n",
+    "### DATA2201: Fall 2025\n",
+    "\n",
+    "This notebook provides small, runnable examples that mirror the lecture topics: matrices, vector spaces, eigenvalues/eigenvectors, partial derivatives, and gradient descent. \n",
+    "\n",
+    "**How to use this notebook**\n",
+    "- Run each cell top-to-bottom.\n",
+    "- Read the short explanations in the markdown cells.\n",
+    "- Modify parameters (e.g., matrices, learning rates) and re-run to see effects.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "41694094",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Core imports (no seaborn as requested)\n",
+    "import math\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "np.set_printoptions(precision=3, suppress=True)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "731b9cea",
+   "metadata": {},
+   "source": [
+    "## 1) Matrices & Operations\n",
+    "\n",
+    "We review basic operations (addition, multiplication, transpose, determinant, inverse) and relate them to ML tasks such as feature transforms.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "15fce7c8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define two small matrices and perform basic ops\n",
+    "A = np.array([[1, 3],\n",
+    "              [2, 4]], dtype=float)\n",
+    "\n",
+    "B = np.array([[2, 1],\n",
+    "              [1, 3]], dtype=float)\n",
+    "\n",
+    "C = np.array([[2, 3],\n",
+    "              [1, 4]], dtype=float)\n",
+    "\n",
+    "print(\"A =\\n\", A)\n",
+    "print(\"B =\\n\", B)\n",
+    "\n",
+    "print(\"\\nAddition: A + B =\\n\", A + B)\n",
+    "print(\"\\nMatrix product: A @ B =\\n\", A @ B)\n",
+    "\n",
+    "print(\"\\nTranspose: A.T =\\n\", A.T)\n",
+    "\n",
+    "detC = np.linalg.det(C)\n",
+    "print(\"\\nDeterminant det(C) =\", round(detC, 3))\n",
+    "\n",
+    "if abs(detC) > 1e-12:\n",
+    "    print(\"\\nInverse of C =\\n\", np.linalg.inv(C))\n",
+    "else:\n",
+    "    print(\"\\nC is singular; inverse does not exist.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "acac96d9",
+   "metadata": {},
+   "source": [
+    "## 2) Vector Spaces & Linear Independence\n",
+    "\n",
+    "A simple way to **test linear independence** numerically is to form a matrix with the vectors as columns and check its rank.\n",
+    "- If rank equals the number of vectors, they are linearly independent.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1113248e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# 2D example: two vectors\n",
+    "v1 = np.array([1, 0.0])\n",
+    "v2 = np.array([0, 1.0])\n",
+    "\n",
+    "M = np.column_stack([v1, v2])\n",
+    "rank = np.linalg.matrix_rank(M)\n",
+    "\n",
+    "print(\"Vectors as columns:\\n\", M)\n",
+    "print(\"Rank =\", rank, \" — independent?\" , rank == M.shape[1])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9e3f5352",
+   "metadata": {},
+   "source": [
+    "## 3) Eigenvalues & Eigenvectors\n",
+    "\n",
+    "- We compute eigenvalues/eigenvectors and show how a linear transform stretches/rotates the plane.\n",
+    "- Try changing the matrix `A`.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3d50f673",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Choose a 2x2 matrix for geometric intuition\n",
+    "A = np.array([[4.0, 1.0],\n",
+    "              [2.0, 3.0]])\n",
+    "\n",
+    "vals, vecs = np.linalg.eig(A)\n",
+    "print(\"Eigenvalues:\\n\", vals)\n",
+    "print(\"\\nEigenvectors (columns):\\n\", vecs)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5bca097c-9842-472e-b62f-dec5f83ced95",
+   "metadata": {},
+   "source": [
+    "## 4) Partial Derivatives & Gradient — Example\n",
+    "\n",
+    "We define a simple quadratic function:\n",
+    "\n",
+    "$\n",
+    "f(x, y) = x^2 + y^2\n",
+    "$\n",
+    "\n",
+    "Its gradient is:\n",
+    "\n",
+    "$\n",
+    "\\nabla f(x, y) = [2x, 2y]\n",
+    "$\n",
+    "\n",
+    "The gradient points in the direction of **steepest increase** of $ f $.\n",
+    "For this function, the gradient always points directly **away from the origin**,\n",
+    "and its magnitude increases with distance from the origin.\n",
+    "\n",
+    "Below, we compute $ f(x, y) $ and $ \\nabla f(x, y) $ at a few sample points.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "717e36c3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "# Define function and gradient\n",
+    "def f(x, y):\n",
+    "    return x**2 + y**2\n",
+    "\n",
+    "def grad_f(x, y):\n",
+    "    return np.array([2*x, 2*y])\n",
+    "\n",
+    "# Sample points\n",
+    "samples = np.array([\n",
+    "    [-2.0, -1.5],\n",
+    "    [1.5, -1.0],\n",
+    "    [2.0, 2.0],\n",
+    "    [-1.0, 2.0]\n",
+    "])\n",
+    "\n",
+    "print(\"f(x, y) = x^2 + y^2\")\n",
+    "print(\"Gradient ∇f(x, y) = [2x, 2y]\\n\")\n",
+    "\n",
+    "# Compute and display\n",
+    "for (x, y) in samples:\n",
+    "    val = f(x, y)\n",
+    "    g = grad_f(x, y)\n",
+    "    print(f\"At (x, y) = ({x:5.2f}, {y:5.2f}) → f = {val:5.2f}, ∇f = {g}\")\n",
+    "\n",
+    "print(\"\\nEach gradient points directly away from the origin (direction of steepest increase).\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "72a42d7f",
+   "metadata": {},
+   "source": [
+    "### Chain Rule (Numeric Check)\n",
+    "\n",
+    "Let $z = x^2 + y^2$ with $x=t^2,\\ y=3t$. Then \n",
+    "$$\\frac{dz}{dt} = 2x\\frac{dx}{dt} + 2y\\frac{dy}{dt} = 4t^3 + 18t.$$\n",
+    "\n",
+    "We verify numerically via finite differences.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "365017ac",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def z_of_t(t):\n",
+    "    x = t**2\n",
+    "    y = 3*t\n",
+    "    return x**2 + y**2\n",
+    "\n",
+    "def dz_dt_chain(t):\n",
+    "    return 4*(t**3) + 18*t\n",
+    "\n",
+    "def finite_diff(f, t, h=1e-6):\n",
+    "    return (f(t+h) - f(t-h)) / (2*h)\n",
+    "\n",
+    "ts = np.linspace(-2, 2, 9)\n",
+    "table = []\n",
+    "for t in ts:\n",
+    "    exact = dz_dt_chain(t)\n",
+    "    approx = finite_diff(z_of_t, t)\n",
+    "    table.append((t, exact, approx, abs(exact-approx)))\n",
+    "\n",
+    "print(\" t     exact_dz/dt   finite_diff    abs_error\")\n",
+    "for row in table:\n",
+    "    print(f\"{row[0]: .2f}   {row[1]: .6f}    {row[2]: .6f}   {row[3]: .2e}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6f26a9cb",
+   "metadata": {},
+   "source": [
+    "## 5) Gradient Descent (1D)\n",
+    "\n",
+    "We minimize $J(\\theta) = (\\theta - 3)^2$ with learning rate \\(\\eta=0.1\\)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "81b45d97",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def J(theta):\n",
+    "    return (theta - 3.0)**2\n",
+    "\n",
+    "def dJ(theta):\n",
+    "    return 2.0*(theta - 3.0)\n",
+    "\n",
+    "def gradient_descent(theta0=0.0, lr=0.1, n_iter=20):\n",
+    "    thetas = [theta0]\n",
+    "    costs = [J(theta0)]\n",
+    "    for k in range(n_iter):\n",
+    "        g = dJ(thetas[-1])\n",
+    "        new_theta = thetas[-1] - lr*g\n",
+    "        thetas.append(new_theta)\n",
+    "        costs.append(J(new_theta))\n",
+    "    return np.array(thetas), np.array(costs)\n",
+    "\n",
+    "thetas, costs = gradient_descent(theta0=0.0, lr=0.1, n_iter=15)\n",
+    "print(\"Iteration  theta      grad        cost\")\n",
+    "for k in range(len(thetas)-1):\n",
+    "    print(f\"{k:3d}      {thetas[k]:7.3f}   {dJ(thetas[k]):7.3f}   {costs[k]:7.3f}\")\n",
+    "\n",
+    "# Plot cost over iterations\n",
+    "fig, ax = plt.subplots(figsize=(6,4))\n",
+    "ax.plot(costs, marker='o')\n",
+    "ax.set_xlabel(\"iteration\")\n",
+    "ax.set_ylabel(\"J(theta)\")\n",
+    "ax.set_title(\"Gradient Descent on J(theta) = (theta-3)^2\")\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0dfc5569-da76-4455-a3af-5ec8c7dbf121",
+   "metadata": {},
+   "source": [
+    "# See You Next Lecture!"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "data2201",
+   "language": "python",
+   "name": "data2201"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.18"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
